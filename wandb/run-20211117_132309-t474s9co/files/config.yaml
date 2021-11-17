@@ -1,0 +1,25 @@
+wandb_version: 1
+
+_wandb:
+  desc: null
+  value:
+    cli_version: 0.12.6
+    is_jupyter_run: false
+    is_kaggle_kernel: true
+    python_version: 3.7.11
+    start_time: 1637126589
+    t:
+      4: 3.7.11
+      5: 0.12.6
+      8:
+      - 2
+      - 5
+docs_path:
+  desc: null
+  value: ../datasets/q_100_d_10000/docs
+epochs:
+  desc: null
+  value: 100
+queries_path:
+  desc: null
+  value: ../datasets/q_100_d_10000/queries
