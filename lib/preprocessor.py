@@ -14,7 +14,7 @@ class preprocessor():
 
     def countInverseTermFrequence(self, docs, queries):
         termCounts = {}
-        clean_threshold = 10
+        clean_threshold = 5
         # 建立辭典(只記錄query出現的term)
         # for query in queries:
         #     for term in set(self.split(query)):
@@ -50,5 +50,5 @@ class preprocessor():
         return tf, len(string)
 
     def tf_Idf(self, string):
-        tf = self.countTermFrequence(string)
+        tf, length = self.countTermFrequence(string)
         return tf * self.inverseTermFrequence

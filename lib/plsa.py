@@ -26,7 +26,6 @@ class PlsaModel():
                 queries_dict[filename.split('.txt')[0]] = fr.read()
         self.docs, self.queries = list(docs_dict.values()), list(queries_dict.values())
         self.preprocessing()
-        print(self.words_docs.shape)
         
         return docs_dict, queries_dict, self.docs, self.queries
 
@@ -62,9 +61,6 @@ class PlsaModel():
         # P(Tk | Dj)
         P_of_td = np.random.rand(topics_length, docs_length)
         P_of_td = P_of_td / np.sum(P_of_td)
-        
-        # P(Tk | Wi, Dj)
-        # P_of_wdt= np.zeros([words_length, docs_length, topics_length])
 
         return P_of_wt, P_of_td
 
@@ -74,15 +70,12 @@ class PlsaModel():
         
         # E Step-1
         print('E Step')
-        # Sum_of_wdt = np.zeros([WL, DL]) + 0.00001
-        # for k in tqdm(range(TL)):
-        #     Sum_of_wdt = Sum_of_wdt + (np.expand_dims(P_of_wt[:, k], axis=1) * np.expand_dims(P_of_td[k, :], axis=0))
-        Sum_of_wdt = P_of_wt * P_of_td
+        Sum_of_wtd = P_of_wt * P_of_td
 
         print('M Step')
         for k in tqdm(range(TL)):
             # E Step-2
-            P_of_wdt = (np.expand_dims(P_of_wt[:, k], axis=1) * np.expand_dims(P_of_td[k, :], axis=0)) / Sum_of_wdt
+            P_of_wdt = (np.expand_dims(P_of_wt[:, k], axis=1) * np.expand_dims(P_of_td[k, :], axis=0)) / Sum_of_wtd
 
             # M Step
             # Update P(Wi | Tk)
@@ -94,12 +87,9 @@ class PlsaModel():
             
         # Log-likelihood
         print('Log-likelihood')
-        # Sum_of_wdt = np.zeros([WL, DL]) + 0.00001
-        # for k in tqdm(range(TL)):
-        #     Sum_of_wdt = Sum_of_wdt + (np.expand_dims(P_of_wt[:, k], axis=1) * np.expand_dims(P_of_td[k, :], axis=0))
-        Sum_of_wdt = P_of_wt * P_of_td
+        Sum_of_wtd = P_of_wt * P_of_td
         
-        log_likelihood = np.sum(self.words_docs * np.log(Sum_of_wdt))
+        log_likelihood = np.sum(self.words_docs * np.log(Sum_of_wtd))
         return P_of_wt, P_of_td, log_likelihood
 
     def train(self, epochs):
@@ -117,7 +107,30 @@ class PlsaModel():
             })
             print('Finished Epoch {}, Log-likelihood: {}'.format(e, log_likelihood), end='\n\n')
 
-    def test(self, queries):
-        for query in queries:
-            query_weights, length = self.prep.countTermFrequence(query)
-            print(query_weights)
+    def searchInit(self, alpha=0.5, beta=0.3):
+        # load P_of_wt, P_of_td
+        data = np.load('./ckpt/1117/cp_33.npz')
+        P_of_wt = data['P_of_wt']
+        P_of_td = data['P_of_td']
+
+        Sum_of_wtd = np.matmul(P_of_wt, P_of_td)
+        norm_of_wd = self.words_docs / np.sum(self.words_docs, axis=0)
+
+        P_of_wbg   = np.sum(self.words_docs, axis=1) / np.sum(self.words_docs)
+        P_of_wbg   = np.expand_dims(P_of_wbg, axis=1)
+        P_of_wbg   = P_of_wbg * (np.zeros([1, self.words_docs.shape[1]]) + 1)
+
+        tf_plsa = np.logaddexp(np.log(alpha) + np.log(norm_of_wd + 0.000001), \
+            np.logaddexp(np.log(beta) + np.log(Sum_of_wtd + 0.000001), np.log(1 - alpha - beta) + np.log(P_of_wbg + 0.000001)))
+        self.tf_plsa = tf_plsa
+        
+    def search(self, query):
+        
+        query_weights, _ = self.prep.countTermFrequence(query)
+        P_of_qw = np.expand_dims(query_weights, axis=0)
+        Plsa_result = np.matmul(P_of_qw, self.tf_plsa)
+
+        # first 3000
+        result = np.argsort(-Plsa_result)[:3000]
+        # print(result)
+        return list(result[0, :])

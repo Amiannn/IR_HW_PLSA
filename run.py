@@ -60,16 +60,17 @@ def plsa(docs_path, queries_path, epochs, experiment):
     docs_dict, queries_dict, docs, queries = PLSA.load(docs_path, queries_path)
     docs_keys   = list(docs_dict.keys())
     # PLSA.train(epochs)
-    PLSA.test(queries)
-    # with open('result.txt', 'w', encoding='utf-8') as fr:
-    #     fr.write('Query,RetrievedDocuments\n')
-    #     print('searching thought queries...')
-    #     for index in tqdm(queries_dict):
-    #         result = PLSA.search(queries_dict[index])
-    #         fr.write('{}, '.format(index))
-    #         for res in result:
-    #             fr.write('{} '.format(docs_keys[res[0]]))
-    #         fr.write('\n')
+    PLSA.searchInit()
+    with open('result.txt', 'w', encoding='utf-8') as fr:
+        fr.write('Query,RetrievedDocuments\n')
+        print('searching thought queries...')
+        for index in tqdm(queries_dict):
+            result = PLSA.search(queries_dict[index])
+            # print(result)
+            fr.write('{}, '.format(index))
+            for res in result:
+                fr.write('{} '.format(docs_keys[res]))
+            fr.write('\n')
 
 
 class config():
@@ -80,7 +81,8 @@ class config():
 
 if __name__ == '__main__':
     cfg = config()
-    experiment = wandb.init(project='IR_HW4_PLSA', resume='allow')
-    experiment.config.update(vars(cfg))
-    plsa(cfg.docs_path, cfg.queries_path, cfg.epochs, experiment)
+    # experiment = wandb.init(project='IR_HW4_PLSA', resume='allow')
+    # experiment.config.update(vars(cfg))
+    # plsa(cfg.docs_path, cfg.queries_path, cfg.epochs, experiment)
+    plsa(cfg.docs_path, cfg.queries_path, cfg.epochs, '')
     
